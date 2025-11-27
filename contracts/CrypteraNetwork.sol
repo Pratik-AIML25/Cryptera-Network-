@@ -1,46 +1,74 @@
-//MIT
-pragma^0.8.20;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
 
-/**
-@titleNetwork
-@devdecentralizedmanagementfortransfersbalances.
-Projectpublic=Token";
-stringsymbol"CRYP";
-uint8decimals18;
-uint256totalSupply;
+contract CrypteraNetwork {
+    struct Proof {
+        address submitter;
+        uint256 timestamp;
+        string metadata; // e.g., document hash, IPFS link, description
+        bool active;
+    }
 
-mapping(addressuint256)balances;
-mapping(addressmapping(addressuint256))allowances;
+    uint256 private nextProofId = 1;
+    mapping(uint256 => Proof) private proofs;
+    mapping(bytes32 => uint256) private hashToProofId;
 
-eventindexedaddressto,amount);
-eventindexedaddressspender,amount);
+    event ProofSubmitted(uint256 indexed proofId, address indexed submitter, string metadata, bytes32 docHash);
+    event ProofMetadataUpdated(uint256 indexed proofId, string newMetadata);
+    event ProofDeactivated(uint256 indexed proofId);
 
-constructor(uint256{
-totalSupply_initialSupply10**uint256(decimals);
-balances[msg.sender]totalSupply;
-emitmsg.sender,@noticetheofuser
-functionaccount)view(uint256)balances[account];
+    /// @notice Submit a new proof with document hash and metadata
+    function submitProof(bytes32 docHash, string memory metadata) external returns (uint256) {
+        require(docHash != bytes32(0), "Invalid hash");
+        require(hashToProofId[docHash] == 0, "Proof already exists");
+
+        uint256 proofId = nextProofId++;
+        proofs[proofId] = Proof({
+            submitter: msg.sender,
+            timestamp: block.timestamp,
+            metadata: metadata,
+            active: true
+        });
+
+        hashToProofId[docHash] = proofId;
+        emit ProofSubmitted(proofId, msg.sender, metadata, docHash);
+        return proofId;
+    }
+
+    /// @notice Update metadata for a proof (only submitter)
+    function updateProofMetadata(uint256 proofId, string memory newMetadata) external {
+        Proof storage p = proofs[proofId];
+        require(p.submitter == msg.sender, "Not submitter");
+        require(p.active, "Proof inactive");
+
+        p.metadata = newMetadata;
+        emit ProofMetadataUpdated(proofId, newMetadata);
+    }
+
+    /// @notice Deactivate a proof (only submitter)
+    function deactivateProof(uint256 proofId) external {
+        Proof storage p = proofs[proofId];
+        require(p.submitter == msg.sender, "Not submitter");
+        require(p.active, "Already inactive");
+
+        p.active = false;
+        emit ProofDeactivated(proofId);
+    }
+
+    /// @notice Retrieve proof details by proof ID
+    function getProof(uint256 proofId) external view returns (address submitter, uint256 timestamp, string memory metadata, bool active) {
+        Proof memory p = proofs[proofId];
+        require(p.timestamp != 0, "Proof not found");
+        return (p.submitter, p.timestamp, p.metadata, p.active);
+    }
+
+    /// @notice Find proof by document hash
+    function findProofByHash(bytes32 docHash) external view returns (uint256) {
+        return hashToProofId[docHash];
+    }
+
+    /// @notice Total proofs submitted
+    function totalProofs() external view returns (uint256) {
+        return nextProofId - 1;
+    }
 }
-
-///Transfertoaddress
-functionto,amount)returns{
-require(balances[msg.sender]amount,balance");
-require(toaddress(0),address");
-
-balances[msg.sender]amount;
-balances[to]amount;
-
-emitto,true;
-}
-
-///Approveaddressspendonbehalf
-functionspender,amount)returns{
-require(spenderaddress(0),spender=Approval(msg.sender,amount);
-return }
-}
- 
-Updated on 2025-11-05
- 
-// 
-End
-// 
